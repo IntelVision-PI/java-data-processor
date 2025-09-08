@@ -2,7 +2,7 @@ package com.sptech.school;
 import java.time.format.DateTimeFormatter;
 import java.util.Random; // para rodar os números de maneira aleatória
 
-public class analise {
+public class Analise {
     private String nome;
     private DateTimeFormatter dataDaVizualizacao;
     private Boolean ativa;
@@ -25,7 +25,7 @@ public class analise {
 
         StringBuilder linha = new StringBuilder();
         for (int i = 0; i < total; i++) {
-            linha.append(i < preenchido ? "◉" : "⊛");
+            linha.append(i < preenchido ? "●" : "○");
         }
         System.out.println(nome + ": " + linha + " " + valor + "%");
         if (valor > 90) {
