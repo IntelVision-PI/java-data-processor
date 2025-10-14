@@ -1,0 +1,15 @@
+user;timestamp;cpu;cpu_count;ram;disco;qtd_processos;bytes_recv;package_recv;bytes_sent;package_sent;proc1_name;proc1_cpu_pct;proc2_name;proc2_cpu_pct;proc3_name;proc3_cpu_pct;proc4_name;proc4_cpu_pct;proc5_name;proc5_cpu_pct
+servidor6.NICOLASF8SK4U2;07/10/2025 14:42;32.2;4;60.8;79.9;259;118814607;118814607;29807232;53946;System Idle Process;84.88;python.exe;6.65;Code.exe;1.62;Code.exe;0.82;chrome.exe;0.47
+servidor6.NICOLASF8SK4U2;07/10/2025 14:42;29.0;4;60.9;79.9;260;118823745;118823745;29839719;53972;System Idle Process;74.15;sqlservr.exe;18.3;python.exe;7.38;dwm.exe;0.28;svchost.exe;0.28
+servidor6.NICOLASF8SK4U2;07/10/2025 14:43;20.1;4;61.6;79.9;260;118862308;118862308;29886094;54075;System Idle Process;39.6;python.exe;7.25;chrome.exe;6.75;chrome.exe;6.42;dwm.exe;5.55
+servidor6.NICOLASF8SK4U2;07/10/2025 14:43;21.7;4;61.2;79.9;261;118868430;118868430;29904045;54105;System Idle Process;92.72;python.exe;6.53;svchost.exe;0.28;System;0.0;;0.0
+servidor6.NICOLASF8SK4U2;07/10/2025 14:43;10.2;4;60.3;79.9;261;118878010;118878010;29915999;54140;System Idle Process;92.3;python.exe;6.45;svchost.exe;0.55;System;0.28;;0.0
+servidor6.NICOLASF8SK4U2;07/10/2025 14:43;9.7;4;59.9;79.9;260;118996398;118996398;29947936;54262;System Idle Process;93.0;python.exe;6.25;svchost.exe;0.57;System;0.0;;0.0
+servidor6.NICOLASF8SK4U2;07/10/2025 14:43;9.0;4;59.4;79.9;260;118997772;118997772;29951177;54276;System Idle Process;83.05;Code.exe;10.53;python.exe;6.25;svchost.exe;0.57;System;0.0
+user;timestamp;cpu;cpu_count;ram;disco;qtd_processos;bytes_recv;package_recv;bytes_sent;package_sent;proc1_name;proc1_cpu_pct;proc2_name;proc2_cpu_pct;proc3_name;proc3_cpu_pct;proc4_name;proc4_cpu_pct;proc5_name;proc5_cpu_pct
+servidor6.NICOLASF8SK4U2;07/10/2025 14:44;66.8;4;60.0;79.9;259;119235295;119235295;30354502;54772;System Idle Process;44.67;chrome.exe;16.35;python.exe;6.55;chrome.exe;3.98;chrome.exe;3.75
+servidor6.NICOLASF8SK4U2;07/10/2025 14:44;32.2;4;60.0;79.9;259;119295864;119298448;30560477;54888;System Idle Process;91.53;python.exe;6.78;System;0.28;svchost.exe;0.28;chrome.exe;0.28
+servidor6.NICOLASF8SK4U2;07/10/2025 14:45;6.8;4;59.4;79.9;259;119310038;119310038;30579077;54935;System Idle Process;92.53;python.exe;6.0;svchost.exe;0.28;System;0.0;;0.0
+servidor6.NICOLASF8SK4U2;07/10/2025 14:45;28.6;4;59.4;79.9;259;119320450;119320450;30605757;54976;System Idle Process;77.42;python.exe;6.72;Code.exe;4.47;Code.exe;1.95;SynTPEnh.exe;1.68
+servidor6.NICOLASF8SK4U2;07/10/2025 14:45;26.8;4;59.8;79.9;261;119340107;119340107;30653902;55042;System Idle Process;44.92;Code.exe;16.48;dwm.exe;10.43;Code.exe;5.92;python.exe;5.12
+servidor6.NICOLASF8SK4U2;07/10/2025 14:45;26.4;4;59.7;79.9;260;119405394;119405394;30690019;55145;System Idle Process;88.92;python.exe;5.67;Code.exe;1.12;svchost.exe;0.85;Code.exe;0.85
