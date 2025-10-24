@@ -15,6 +15,14 @@
             //variavel de consulta no banco de dados com parametro posicional
             String consulta="SELECT COUNT(*) FROM servidor WHERE nome = ?";
 
+            String consultaParametro="select s.nome,\n" +
+                    "c.nome as \"Componente\",\n" +
+                    "p.alerta_min,\n" +
+                    "p.alerta_max\n" +
+                    "from servidor s\n" +
+                    "inner join parametro p on p.fkServidor = s.id\n" +
+                    "right join componente c on c.id = p.fkComponente;";
+
             //lista dos processos que deve ser ignorado
             List<String> ignorar = Arrays.asList(
                     "System Idle Process",
@@ -25,12 +33,21 @@
                     "csrss.exe"
             );
 
+            /*{
+            "servidor":
+                "componente": valores[]
+              }
+             */
+            Map<String, Map<String, double[]>> parametros = new HashMap<>();
+
             //try iniciando os buffers de leitura e escrita
             try (BufferedReader br = new BufferedReader(new FileReader(inputPath));
                  BufferedWriter bw = new BufferedWriter(new FileWriter(outputPath))) {
 
                 //instacio a variavel para mandar para o banco passando a minha variavel de consulta iniciada la em cima
                 PreparedStatement pst = conexao.prepareStatement(consulta);
+                PreparedStatement pst2 = conexao.prepareStatement(consultaParametro);
+
 
                 //variavel de validação para ver se existe ou não o servidor no banco de dados
                 boolean existe= false;
@@ -44,18 +61,21 @@
                     return;
                 }
                 //escrevo no meu csv o meu novo cabeçalho com o top3 ao inves do top5
-                bw.write("user;timestamp;cpu;cpu_count;ram;disco;qtd_processos;bytes_recv;package_recv;bytes_sent;package_sent;proc1_name;proc1_cpu_pct;proc2_name;proc2_cpu_pct;proc3_name;proc3_cpu_pct");
-                bw.newLine();
+                bw.write("user;timestamp;cpu;cpu_count;ram;disco;qtd_processos;bytes_recv;package_recv;bytes_sent;package_sent;" +
+                        "status_cpu;status_ram;status_disco;" +
+                        "proc1_name;proc1_cpu_pct;proc2_name;proc2_cpu_pct;proc3_name;proc3_cpu_pct");
+                bw.newLine();;
 
                 //inicio a variavel que vai receber os dados da linha
                 String linha;
                 //rodo um while() até que não exista mais dados na variavel "Linha"
                 while ((linha = br.readLine()) != null) {
-                    //inicio um vetor de String para receber toda a linha lida mas separada com ;
+                    //inicio um vetor de String para receber toda a linha e vai quebrar toda vez q tiver um;
+                    //que ja esta como delimitador do csv original
                     String[] colunas = linha.split(";");
 
                     //salvo nas variaveis os itens salvos no vetor de coluna
-                    String user = colunas[0];
+                    String user = colunas[0].toLowerCase();
                     String timestamp = colunas[1];
                     String cpu = colunas[2];
                     String cpu_count = colunas[3];
@@ -67,13 +87,15 @@
                     String bytes_sent = colunas[9];
                     String package_sent = colunas[10];
 
+
+
+
+
                     //chamo o pst para executar a consulta no banco de dados passando como parametro para
                     //o meu parametro posicional a variavel user par verificar se o servidor existe no BD
                     pst.setString(1,user);
                     //mando executar a query e salvo oq ele retorna na variavel "rs"
                     ResultSet rs= pst.executeQuery();
-
-
                     //faço a verificação do retorno do BD para saber se o servidor existe ou não no banco e passo para a minha variavel existe
                     if (rs.next()) {
                         existe = rs.getInt(1) > 0;
@@ -86,8 +108,32 @@
                     }else{
                         System.out.println("Servidor existe");
                     }
+                    ResultSet rsParametro =pst2.executeQuery();
 
 
+                    while(rsParametro.next()){
+                        String servidor = rsParametro.getString("nome").toLowerCase();
+                        String nomeComponente = rsParametro.getString("Componente").toLowerCase();
+                        double alerta_min = rsParametro.getDouble("alerta_min");
+                        double alerta_max = rsParametro.getDouble("alerta_max");
+
+
+                        parametros.putIfAbsent(servidor, new HashMap<>());
+                        parametros.get(servidor).put(nomeComponente, new double[]{alerta_min, alerta_max});
+
+                    }
+                    Map<String, double[]> componentesServidor = parametros.get(user);
+                    String statusCpu = "SEM_PARAMETRO";
+                    String statusRam = "SEM_PARAMETRO";
+                    String statusDisco = "SEM_PARAMETRO";
+
+                    if (componentesServidor != null) {
+                        statusCpu = validarComponente("cpu", Double.parseDouble(cpu), componentesServidor, user);
+                        statusRam = validarComponente("ram", Double.parseDouble(ram), componentesServidor, user);
+                        statusDisco = validarComponente("disco", Double.parseDouble(disco), componentesServidor, user);
+                    } else {
+                        System.out.println("⚠️ Servidor '" + user + "' não tem parâmetros cadastrados!");
+                    }
 
                     //crio uma lista de Processos da classe "Processo"
                     List<Processo> processos = new ArrayList<>();
@@ -118,7 +164,8 @@
                     StringBuilder novaLinha = new StringBuilder();
                     //falo para o StringBuilder juntar tudo(as variaveis que eu passei) com um delimetador de ;
                     novaLinha.append(String.join(";", user, timestamp, cpu, cpu_count, ram, disco,
-                            qtd_processos, bytes_recv, package_recv, bytes_sent, package_sent));
+                            qtd_processos, bytes_recv, package_recv, bytes_sent, package_sent,
+                            statusCpu, statusRam, statusDisco));
 
 
                     //faço um for rodar 3 vezes(top3) para pegar os processos da lista
@@ -143,6 +190,28 @@
 
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        private static String validarComponente(String nomeComp, double valor, Map<String, double[]> componentes, String servidor) {
+            if (!componentes.containsKey(nomeComp)) {
+                System.out.println("⚠️ " + servidor + " não possui o componente '" + nomeComp + "'");
+                return "SEM_PARAMETRO";
+            }
+
+            double[] limites = componentes.get(nomeComp);
+            double min = limites[0];
+            double max = limites[1];
+
+            if (valor < min) {
+                System.out.println("🔵 " + servidor + " | " + nomeComp + " abaixo do mínimo (" + valor + " < " + min + ")");
+                return "ABAIXO";
+            } else if (valor > max) {
+                System.out.println("🔴 " + servidor + " | " + nomeComp + " acima do máximo (" + valor + " > " + max + ")");
+                return "ACIMA";
+            } else {
+                System.out.println("✅ " + servidor + " | " + nomeComp + " dentro do limite");
+                return "OK";
             }
         }
 
