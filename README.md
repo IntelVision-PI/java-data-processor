@@ -98,14 +98,3 @@ Autor
 Nicolas Barbosa
 Projeto desenvolvido para automação e tratamento de dados de servidores monitorados na plataforma IntelVision.
 
-
-
-
-
-
-
-
-
-
-
-O ChatGPT pode 

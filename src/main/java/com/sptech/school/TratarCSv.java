@@ -9,7 +9,12 @@
             //nomes arquivos de entrada e saida
             String inputPath = "dados_maquina.csv";
             String outputPath = "csv_tratado.csv";
-            Connection conexao = DriverManager.getConnection("jdbc:mysql://<IP EC2>/<BANCO>", "intelvision-select", "senha12@");
+            Connection conexao = DriverManager.getConnection(
+                    "jdbc:mysql://localhost/intelvision",
+                    "intelvision-select",
+                    "senha12@"
+            );
+            Map<String, List<String>> alertasPorServidor = new HashMap<>();
 
 
             String consulta="SELECT COUNT(*) FROM servidor WHERE nome = ?";
@@ -76,10 +81,6 @@
                     String package_sent = colunas[10];
 
 
-
-
-
-
                     pst.setString(1,user);
                     ResultSet rs= pst.executeQuery();
                     if (rs.next()) {
@@ -112,9 +113,10 @@
                     String statusDisco = "SEM_PARAMETRO";
 
                     if (componentesServidor != null) {
-                        statusCpu = validarComponente("cpu", Double.parseDouble(cpu), componentesServidor, user);
-                        statusRam = validarComponente("ram", Double.parseDouble(ram), componentesServidor, user);
-                        statusDisco = validarComponente("disco", Double.parseDouble(disco), componentesServidor, user);
+                        statusCpu = validarComponente("cpu", Double.parseDouble(cpu), componentesServidor, user, alertasPorServidor);
+                        statusRam = validarComponente("ram", Double.parseDouble(ram), componentesServidor, user, alertasPorServidor);
+                        statusDisco = validarComponente("disco", Double.parseDouble(disco), componentesServidor, user, alertasPorServidor);
+
                     } else {
                         System.out.println(" Servidor '" + user + "' não tem parâmetros cadastrados!");
                     }
@@ -155,6 +157,16 @@
                     bw.write(novaLinha.toString());
                     bw.newLine();
                 }
+                if (!alertasPorServidor.isEmpty()) {
+                    System.out.println("\n Criando tickets no Jira...\n");
+                    for (Map.Entry<String, List<String>> entry : alertasPorServidor.entrySet()) {
+                        String servidor = entry.getKey();
+                        List<String> alertas = entry.getValue();
+                        ConexaoJira.criarIssue(servidor, alertas);
+                    }
+                } else {
+                    System.out.println("\n Nenhum alerta crítico detectado. Nenhum ticket criado.");
+                }
 
                 System.out.println("CSV criado em: " + outputPath);
 
@@ -163,9 +175,11 @@
             }
         }
 
-        private static String validarComponente(String nomeComp, double valor, Map<String, double[]> componentes, String servidor) {
+        private static String validarComponente(String nomeComp, double valor, Map<String, double[]> componentes,
+                                                String servidor, Map<String, List<String>> alertasPorServidor) {
+
             if (!componentes.containsKey(nomeComp)) {
-                System.out.println( servidor + " não possui o componente '" + nomeComp + "'");
+                System.out.println(servidor + " não possui o componente '" + nomeComp + "'");
                 return "SEM_PARAMETRO";
             }
 
@@ -174,13 +188,23 @@
             double max = limites[1];
 
             if (valor < min) {
-                System.out.println( servidor + " | " + nomeComp + " abaixo do mínimo (" + valor + " < " + min + ")");
+                String alerta = nomeComp.toUpperCase() + " abaixo do mínimo (" + valor + " < " + min + ")";
+                System.out.println(servidor + " | " + alerta);
+
+                alertasPorServidor.putIfAbsent(servidor, new ArrayList<>());
+                alertasPorServidor.get(servidor).add(alerta);
+
                 return "ABAIXO";
             } else if (valor > max) {
-                System.out.println( servidor + " | " + nomeComp + " acima do máximo (" + valor + " > " + max + ")");
+                String alerta = nomeComp.toUpperCase() + " acima do máximo (" + valor + " > " + max + ")";
+                System.out.println(servidor + " | " + alerta);
+
+                alertasPorServidor.putIfAbsent(servidor, new ArrayList<>());
+                alertasPorServidor.get(servidor).add(alerta);
+
                 return "ACIMA";
             } else {
-                System.out.println( servidor + " | " + nomeComp + " dentro do limite");
+                System.out.println(servidor + " | " + nomeComp + " dentro do limite");
                 return "OK";
             }
         }
