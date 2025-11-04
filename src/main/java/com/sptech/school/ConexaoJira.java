@@ -13,6 +13,13 @@ public class ConexaoJira {
         try {
 
 
+            String jiraUrl= "<URL do jira da sua pagina>";
+            String usuarioEmail="<seu email do jira>";
+            String apiToken="<token da sua api do jira>";
+            String projetoKey="<chave do seu projeto>";
+
+
+
             String auth = usuarioEmail + ":" + apiToken;
             String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
 

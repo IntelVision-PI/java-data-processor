@@ -2,6 +2,9 @@
 
     import java.io.*;
     import java.sql.*;
+    import java.time.LocalDate;
+    import java.time.LocalDateTime;
+    import java.time.format.DateTimeFormatter;
     import java.util.*;
 
     public class TratarCSv {
@@ -14,7 +17,8 @@
                     "intelvision-select",
                     "senha12@"
             );
-            Map<String, List<String>> alertasPorServidor = new HashMap<>();
+            Map<String, Map<String, LocalDateTime>> alertasPorServidor = new HashMap<>();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
 
             String consulta="SELECT COUNT(*) FROM servidor WHERE nome = ?";
@@ -66,9 +70,12 @@
                 String linha;
                 while ((linha = br.readLine()) != null) {
 
+
+
                     String[] colunas = linha.split(";");
 
                     String user = colunas[0].toLowerCase();
+                    LocalDateTime timestampData = LocalDateTime.parse(colunas[1], formatter);
                     String timestamp = colunas[1];
                     String cpu = colunas[2];
                     String cpu_count = colunas[3];
@@ -113,9 +120,9 @@
                     String statusDisco = "SEM_PARAMETRO";
 
                     if (componentesServidor != null) {
-                        statusCpu = validarComponente("cpu", Double.parseDouble(cpu), componentesServidor, user, alertasPorServidor);
-                        statusRam = validarComponente("ram", Double.parseDouble(ram), componentesServidor, user, alertasPorServidor);
-                        statusDisco = validarComponente("disco", Double.parseDouble(disco), componentesServidor, user, alertasPorServidor);
+                        statusCpu = validarComponente("cpu", Double.parseDouble(cpu), componentesServidor, user, alertasPorServidor, timestampData);
+                        statusRam = validarComponente("ram", Double.parseDouble(ram), componentesServidor, user, alertasPorServidor, timestampData);
+                        statusDisco = validarComponente("disco", Double.parseDouble(disco), componentesServidor, user, alertasPorServidor, timestampData);
 
                     } else {
                         System.out.println(" Servidor '" + user + "' não tem parâmetros cadastrados!");
@@ -139,7 +146,7 @@
                     processos.sort((a, b) -> Double.compare(b.cpuPct, a.cpuPct));
 
                     StringBuilder novaLinha = new StringBuilder();
-                    novaLinha.append(String.join(";", user, timestamp, cpu, cpu_count, ram, disco,
+                    novaLinha.append(String.join(";", user, (String)timestamp, cpu, cpu_count, ram, disco,
                             qtd_processos, bytes_recv, package_recv, bytes_sent, package_sent,
                             statusCpu, statusRam, statusDisco));
 
@@ -159,9 +166,18 @@
                 }
                 if (!alertasPorServidor.isEmpty()) {
                     System.out.println("\n Criando tickets no Jira...\n");
-                    for (Map.Entry<String, List<String>> entry : alertasPorServidor.entrySet()) {
+
+                    for (Map.Entry<String, Map<String, LocalDateTime>> entry : alertasPorServidor.entrySet()) {
                         String servidor = entry.getKey();
-                        List<String> alertas = entry.getValue();
+                        Map<String, LocalDateTime> alertasMap = entry.getValue();
+
+                        List<String> alertas = new ArrayList<>();
+                        for (Map.Entry<String, LocalDateTime> alertaEntry : alertasMap.entrySet()) {
+                            String alertaNome = alertaEntry.getKey();
+                            LocalDateTime horaAlerta = alertaEntry.getValue();
+                            alertas.add(alertaNome + " em " + horaAlerta);
+                        }
+
                         ConexaoJira.criarIssue(servidor, alertas);
                     }
                 } else {
@@ -176,7 +192,7 @@
         }
 
         private static String validarComponente(String nomeComp, double valor, Map<String, double[]> componentes,
-                                                String servidor, Map<String, List<String>> alertasPorServidor) {
+                                                String servidor, Map<String, Map<String,LocalDateTime>> alertasPorServidor, LocalDateTime timestamp) {
 
             if (!componentes.containsKey(nomeComp)) {
                 System.out.println(servidor + " não possui o componente '" + nomeComp + "'");
@@ -191,16 +207,16 @@
                 String alerta = nomeComp.toUpperCase() + " abaixo do mínimo (" + valor + " < " + min + ")";
                 System.out.println(servidor + " | " + alerta);
 
-                alertasPorServidor.putIfAbsent(servidor, new ArrayList<>());
-                alertasPorServidor.get(servidor).add(alerta);
+                alertasPorServidor.putIfAbsent(servidor, new HashMap<>());
+                alertasPorServidor.get(servidor).put(alerta,timestamp);
 
                 return "ABAIXO";
             } else if (valor > max) {
                 String alerta = nomeComp.toUpperCase() + " acima do máximo (" + valor + " > " + max + ")";
                 System.out.println(servidor + " | " + alerta);
 
-                alertasPorServidor.putIfAbsent(servidor, new ArrayList<>());
-                alertasPorServidor.get(servidor).add(alerta);
+                alertasPorServidor.putIfAbsent(servidor, new HashMap<>());
+                alertasPorServidor.get(servidor).put(alerta,timestamp);
 
                 return "ACIMA";
             } else {
