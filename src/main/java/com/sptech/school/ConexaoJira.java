@@ -13,6 +13,8 @@ public class ConexaoJira {
         try {
 
 
+
+
             String jiraUrl= "<URL do jira da sua pagina>";
             String usuarioEmail="<seu email do jira>";
             String apiToken="<token da sua api do jira>";
