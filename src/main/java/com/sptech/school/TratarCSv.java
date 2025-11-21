@@ -77,7 +77,8 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         String consulta="SELECT COUNT(*) FROM servidor WHERE nome = ?";
-        String consultaParametro="select s.nome, c.nome as \"Componente\", p.alerta_min, p.alerta_max "
+        String consultaParametro="select s.nome, c.nome as \"Componente\", p.alerta,"
+                + " p.em_risco_min, p.em_risco_max "
                 + "from servidor s inner join parametro p on p.fkServidor = s.id "
                 + "right join componente c on c.id = p.fkComponente;";
 
@@ -119,11 +120,12 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
                 while (rsParametro.next()) {
                     String servidor = rsParametro.getString("nome").toLowerCase();
                     String nomeComponente = rsParametro.getString("Componente").toLowerCase();
-                    double alerta_min = rsParametro.getDouble("alerta_min");
-                    double alerta_max = rsParametro.getDouble("alerta_max");
+                    double em_risco_min = rsParametro.getDouble("em_risco_min");
+                    double em_risco_max = rsParametro.getDouble("em_risco_max");
+                    double alerta = rsParametro.getDouble("alerta");
 
                     parametros.putIfAbsent(servidor, new HashMap<>());
-                    parametros.get(servidor).put(nomeComponente, new double[]{alerta_min, alerta_max});
+                    parametros.get(servidor).put(nomeComponente, new double[]{alerta, em_risco_min, em_risco_max});
                 }
 
                 Map<String, double[]> componentesServidor = parametros.get(user);
