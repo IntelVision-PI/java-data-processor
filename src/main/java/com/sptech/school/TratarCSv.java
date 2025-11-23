@@ -43,7 +43,7 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
             return "Erro no processamento: " + e.getMessage();
         }
 
-        String bucketTrusted = "my-bucket-trusted";
+        String bucketTrusted = "my-bucket-trusted-nicolas";
 
         String[] partes = keyRaw.split("/");
 
@@ -68,7 +68,7 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
     public void processarCsv(String inputPath, String outputPath) throws SQLException {
 
         Connection conexao = DriverManager.getConnection(
-                "jdbc:mysql://52.23.99.63:3306/intelvision",
+                "jdbc:mysql://44.217.46.168:3306/intelvision",
                 "intelvision-select",
                 "senha12@"
         );
@@ -97,7 +97,7 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
             if (header == null) return;
 
             bw.write("user;timestamp;cpu;cpu_count;ram;disco;disco_size_gb;qtd_processos;bytes_recv;package_recv;bytes_sent;package_sent;"
-                    + "rede_download_mbps;rede_upload_mbps;rede_saturacao;rede_latencia;rede_jitter;rede_perda"
+                    + "rede_download_mbps;rede_upload_mbps;rede_saturacao;rede_latencia;rede_jitter;rede_perda;"
                     + "status_cpu;status_ram;status_disco;"
                     + "proc1_name;proc1_cpu_pct;proc2_name;proc2_cpu_pct;proc3_name;proc3_cpu_pct");
             bw.newLine();
@@ -105,7 +105,7 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
             String linha;
             while ((linha = br.readLine()) != null) {
 
-                String[] colunas = linha.split(";");
+                String[] colunas = linha.split(";", -1);
 
                 String user = colunas[0].toLowerCase();
                 LocalDateTime timestampData = LocalDateTime.parse(colunas[1], formatter);
@@ -139,7 +139,7 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
 
                 List<Processo> processos = new ArrayList<>();
 
-                for (int i = 12; i < colunas.length; i += 2) {
+                for (int i = 18; i < colunas.length; i += 2) {
                     if (i + 1 < colunas.length) {
                         String nome = colunas[i].trim();
                         double cpuPct = Double.parseDouble(colunas[i + 1].trim());
@@ -166,6 +166,12 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
                         colunas[9],
                         colunas[10],
                         colunas[11],
+                        colunas[12],
+                        colunas[13],
+                        colunas[14],
+                        colunas[15],
+                        colunas[16],
+                        colunas[17],
                         statusCpu,
                         statusRam,
                         statusDisco
@@ -212,37 +218,51 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
     }
 
     private static String validarComponente(String nomeComp, double valor, Map<String, double[]> componentes,
-                                            String servidor, Map<String, Map<String,LocalDateTime>> alertasPorServidor, LocalDateTime timestamp) {
+                                            String servidor, Map<String, Map<String, LocalDateTime>> alertasPorServidor, LocalDateTime timestamp) {
 
         if (!componentes.containsKey(nomeComp)) {
-            System.out.println(servidor + " não possui o componente '" + nomeComp + "'");
             return "SEM_PARAMETRO";
         }
 
         double[] limites = componentes.get(nomeComp);
-        double min = limites[0];
-        double max = limites[1];
 
-        if (valor < min) {
-            String alerta = nomeComp.toUpperCase() + " abaixo do mínimo (" + valor + " < " + min + ")";
-            System.out.println(servidor + " | " + alerta);
+        // [0] = alerta
+        // [1] = em_risco_min
+        // [2] = em_risco_max
+
+        double valAlerta = limites[0];
+        double valMin = limites[1];
+        double valMax = limites[2];
+
+
+        if (valor > valMax) {
+            String msg = nomeComp.toUpperCase() + " CRÍTICO (" + valor + " > " + valMax + ")";
 
             alertasPorServidor.putIfAbsent(servidor, new HashMap<>());
-            alertasPorServidor.get(servidor).put(alerta,timestamp);
+            alertasPorServidor.get(servidor).put(msg, timestamp);
+
+            return "CRITICO";
+        }
+        else if (valor > valAlerta) {
+            String msg = nomeComp.toUpperCase() + " ALERTA (" + valor + " > " + valAlerta + ")";
+
+            alertasPorServidor.putIfAbsent(servidor, new HashMap<>());
+            alertasPorServidor.get(servidor).put(msg, timestamp);
+
+            return "ALERTA";
+        }
+        else if (valor < valMin) {
+            String msg = nomeComp.toUpperCase() + " ABAIXO do esperado (" + valor + " < " + valMin + ")";
+
+            alertasPorServidor.putIfAbsent(servidor, new HashMap<>());
+            alertasPorServidor.get(servidor).put(msg, timestamp);
 
             return "ABAIXO";
-        } else if (valor > max) {
-            String alerta = nomeComp.toUpperCase() + " acima do máximo (" + valor + " > " + max + ")";
-            System.out.println(servidor + " | " + alerta);
-
-            alertasPorServidor.putIfAbsent(servidor, new HashMap<>());
-            alertasPorServidor.get(servidor).put(alerta,timestamp);
-
-            return "ACIMA";
-        } else {
-            System.out.println(servidor + " | " + nomeComp + " dentro do limite");
+        }
+        else {
             return "OK";
         }
     }
+    }
 
-}
+
