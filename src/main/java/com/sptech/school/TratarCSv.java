@@ -97,6 +97,7 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
             if (header == null) return;
 
             bw.write("user;timestamp;cpu;cpu_count;ram;disco;disco_size_gb;qtd_processos;bytes_recv;package_recv;bytes_sent;package_sent;"
+                    + "rede_download_mbps;rede_upload_mbps;rede_saturacao;rede_latencia;rede_jitter;rede_perda"
                     + "status_cpu;status_ram;status_disco;"
                     + "proc1_name;proc1_cpu_pct;proc2_name;proc2_cpu_pct;proc3_name;proc3_cpu_pct");
             bw.newLine();
