@@ -9,7 +9,7 @@ import java.util.List;
 
 public class ConexaoJira {
 
-    public static String criarIssue(String servidor, List<String> alertas) {
+    public static String criarIssue(String servidor, List<String> alertas, String param, String alert) {
         try {
 
 
@@ -34,7 +34,7 @@ public class ConexaoJira {
             //contente é um array de objeto de paragrafo
             descricaoJson.append("{\"type\":\"doc\",\"version\":1,\"content\":[");
             //ja dentro do array content,
-            descricaoJson.append("{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Foram detectados alertas críticos no servidor " + servidor + ":\"}]},");
+            descricaoJson.append("{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"" + alertas.size() + " alertas críticos foram detectados no servidor " + servidor + ":\"}]},");
 
             for (String alerta : alertas) {
                 descricaoJson.append("{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"" + alerta.replace("\"", "\\\"") + "\"}]}," );
@@ -50,6 +50,7 @@ public class ConexaoJira {
                     "    \"summary\": \"Alertas críticos detectados - Servidor " + servidor + "\",\n" +
                     "    \"description\": " + descricaoJson.toString() + ",\n" +
                     "    \"issuetype\": {\"name\": \"Task\"}\n" +
+                    "    \"labels\": [\"" + param + "\", \"" + alert + "\"]\n" +
                     "  }\n" +
                     "}";
 

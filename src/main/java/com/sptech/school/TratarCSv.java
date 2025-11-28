@@ -197,15 +197,26 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
                     String servidor = entry.getKey();
                     Map<String, LocalDateTime> alertasMap = entry.getValue();
 
-                    List<String> alertas = new ArrayList<>();
-                    for (Map.Entry<String, LocalDateTime> alertaEntry : alertasMap.entrySet()) {
-                        String alertaNome = alertaEntry.getKey();
-                        LocalDateTime horaAlerta = alertaEntry.getValue();
-                        alertas.add(alertaNome + " em " + horaAlerta);
-                    }
+                    List<String> parametroLista = Arrays.asList("CPU", "RAM", "HD");
+                    List<String> alertaLista = Arrays.asList("CRÍTICO", "ALERTA", "ABAIXO");
 
-                    String resultado = ConexaoJira.criarIssue(servidor, alertas);
-                    System.out.println("Resultado Jira: " + resultado);
+                    for (String param : parametroLista) {
+                        for (String alert : alertaLista) {
+                            List<String> alertas = new ArrayList<>();
+                            for (Map.Entry<String, LocalDateTime> alertaEntry : alertasMap.entrySet()) {
+                                if (alertaEntry.getKey().contains(param) && alertaEntry.getKey().contains(alert)) {
+                                    String alertaNome = alertaEntry.getKey();
+                                    LocalDateTime horaAlerta = alertaEntry.getValue();
+                                    alertas.add(alertaNome + " em " + horaAlerta.toLocalTime());
+                                }
+                            }
+
+                            if (!alertas.isEmpty()) {
+                                String resultado = ConexaoJira.criarIssue(servidor, alertas, param, alert);
+                                System.out.println("Resultado Jira: " + resultado);
+                            }
+                        }
+                    }
                 }
             } else {
                 System.out.println("Nenhum alerta crítico detectado. Nenhum ticket criado.");
