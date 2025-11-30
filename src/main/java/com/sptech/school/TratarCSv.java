@@ -5,6 +5,8 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.S3Event;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.sql.*;
@@ -59,6 +61,11 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
         String keyTrusted = String.format("%s/%s/%s/%s", ano, mes, dia, fileName);
 
         s3.putObject(bucketTrusted, keyTrusted, outputFile);
+
+        // Gerando arquivo.csv de Chamados Jira
+        String caminhoCsv = "/tmp/chamados.csv";
+        ConexaoJira.baixarIssues(caminhoCsv);
+        s3.putObject(bucketTrusted, "jira/chamados/chamados.csv", new File(caminhoCsv));
 
         return "Processado e salvo em: " + keyTrusted;
     }
@@ -274,6 +281,4 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
             return "OK";
         }
     }
-    }
-
-
+}
