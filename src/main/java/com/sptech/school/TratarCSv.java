@@ -45,7 +45,7 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
             return "Erro no processamento: " + e.getMessage();
         }
 
-        String bucketTrusted = "my-bucket-trusted-nicolas";
+        String bucketTrusted = "meu-bucket-teste-vinculo-guilherme-client";
 
         String[] partes = keyRaw.split("/");
 

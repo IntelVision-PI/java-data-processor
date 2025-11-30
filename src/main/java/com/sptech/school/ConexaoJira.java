@@ -15,14 +15,15 @@ import java.util.Base64;
 import java.util.List;
 
 public class ConexaoJira {
-    static final String jiraUrl= "<URL do jira da sua pagina>";
-    static final String usuarioEmail="<seu email do jira>";
-    static final String apiToken="<token da sua api do jira>";
-    static final String projetoKey="<chave do seu projeto>";
+    static final String jiraUrl= "https://sptech-team-a6j2hxx3.atlassian.net";
+    static final String usuarioEmail="guilherme.sdias@sptech.school";
+    static final String apiToken="ATATT3xFfGF0jRJDn8ClyDx7_n8fbxsZJ-uBco01R7j8kfXOp5FjGxEJdyc-MJhvBmyj44TQYAAHUTIwlaqBKaEr1IkBrBaSzRQ8FiY4epNgZkhSsxQPNHIEmSUUbRtMmvOATqGuihcdsnLLTkSMQc-l1ywjRPOXhH4zIuSWpGJktp7N9Qf9rGA=028AA29A";
+    static final String projetoKey="CHAM";
 
     public static String criarIssue(String servidor, List<String> alertas, String param, String alert) {
         try {
 
+            String jiraUrlCriar = jiraUrl + "/rest/api/3/issue";
 
             String auth = usuarioEmail + ":" + apiToken;
             String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
@@ -50,14 +51,14 @@ public class ConexaoJira {
                     "    \"project\": {\"key\": \"" + projetoKey + "\"},\n" +
                     "    \"summary\": \"Alertas críticos detectados - Servidor " + servidor + "\",\n" +
                     "    \"description\": " + descricaoJson.toString() + ",\n" +
-                    "    \"issuetype\": {\"name\": \"Task\"}\n" +
+                    "    \"issuetype\": {\"name\": \"Task\"},\n" +
                     "    \"labels\": [\"" + param + "\", \"" + alert + "\"]\n" +
                     "  }\n" +
                     "}";
 
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(jiraUrl))
+                    .uri(URI.create(jiraUrlCriar))
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Basic " + encodedAuth)
                     .POST(HttpRequest.BodyPublishers.ofString(json))
