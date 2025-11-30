@@ -46,6 +46,7 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
         }
 
         String bucketTrusted = "meu-bucket-teste-vinculo-guilherme-client";
+        String bucketClient = "meu-bucket-teste-vinculo-guilherme-client";
 
         String[] partes = keyRaw.split("/");
 
@@ -65,7 +66,7 @@ public class TratarCSv implements RequestHandler<S3Event, String> {
         // Gerando arquivo.csv de Chamados Jira
         String caminhoCsv = "/tmp/chamados.csv";
         ConexaoJira.baixarIssues(caminhoCsv);
-        s3.putObject(bucketTrusted, "jira/chamados/chamados.csv", new File(caminhoCsv));
+        s3.putObject(bucketClient, "jira/chamados/chamados.csv", new File(caminhoCsv));
 
         return "Processado e salvo em: " + keyTrusted;
     }
